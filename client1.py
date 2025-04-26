@@ -1,22 +1,35 @@
-# client1.py
 import socket
 import threading
 
-def receive_messages(sock):
+def receive_messages(client_socket):
     while True:
         try:
-            msg = sock.recv(1024).decode()
-            if msg:
-                print(f"\nClient 2: {msg}")
+            message = client_socket.recv(1024).decode()
+            if not message:
+                break
+            print(f"\nFriend: {message}\nYou: ", end='')
         except:
+            print("\n[!] Connection closed by server.")
             break
 
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(('127.0.0.1', 6666))
+def main():
+    server_ip = input("Enter server IP (default 127.0.0.1): ") or "127.0.0.1"
+    server_port = 6666
 
-print("You are Client 1. Connected to server.")
-threading.Thread(target=receive_messages, args=(client,), daemon=True).start()
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect((server_ip, server_port))
 
-while True:
-    msg = input("You: ")
-    client.send(msg.encode())
+    print("[+] Connected to server!")
+
+    threading.Thread(target=receive_messages, args=(client_socket,), daemon=True).start()
+
+    while True:
+        msg = input("You: ")
+        if msg.lower() == "exit":
+            break
+        client_socket.send(msg.encode())
+
+    client_socket.close()
+
+if __name__ == "__main__":
+    main()
