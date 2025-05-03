@@ -2,7 +2,22 @@
 import socket
 import threading
 import time
-from aes_encyption import aes_encrypt_block, aes_decrypt_block, generate_key
+from aes_encryption import aes_encrypt_block, aes_decrypt_block, generate_key
+
+
+instructions = (
+    "\n=== Messaging Formats ===\n"
+    "🔷  To send a private message:         username : your_message\n"
+    "🔷  To broadcast to all users:         all : your_message\n"
+    "🔷  To send to multiple users:         sendto: user1, user2 : your_message\n"
+    "🔷  To Create Group:                   creategroup: my_group : user1,user2\n"
+    "🔷  To send message in Group:          sendgroup : mygroup : Hello Members\n"
+    "🔷  To remove user from Group:         removefromgroup: mygroup: user3\n"
+    "🔶  To exit the chat:                  type 'exit'\n"
+    "==========================\n"
+)
+
+
 
 
 
@@ -14,7 +29,7 @@ def receive_messages(client_socket , key):
                 break
 
             message = data.decode().strip()
-
+    
             # --- Group Message ---
             if message.startswith("[Group:"):
                 try:
@@ -139,25 +154,50 @@ def main():
     threading.Thread(target=receive_messages, args=(client_socket,key), daemon=True).start()
 
     while True:
-        print("\n=== Messaging Formats ===")
-        print("🔷To send a private message:         username : your_message")
-        print("🔷To broadcast to all users:         all : your_message")
-        print("🔷To send to multiple users:         sendto: user1, user2 : your_message")
-        print("🔷To Create Group:                   creategroup: my_group : user1,user2")
-        print("🔷To send message in Group:          sendgroup : mygroup : Hello Members")
-        print("🔷To remove user from Group:         removefromgroup: mygroup: user3")
-        print("🔶To exit the chat:                  type 'exit'")
-        print("==========================\n")
+       
+        print("\n"+instructions)
 
         msg = input("\nYou:  ")
+
+     
+        
 
         if msg.lower() == "exit":
             break
 
         if ":" in msg:
-            target = msg.split(":", 1)[0].strip()
-            send_typing_notification(client_socket, target)
-            time.sleep(0.3)
+            lower_msg = msg.lower()
+            target = None
+
+            if lower_msg.startswith("sendgroup:"):
+                try:
+                    _, group, _ = msg.split(":", 2)
+                    target = group.strip()
+                except:
+                    pass
+
+            elif lower_msg.startswith("sendto:"):
+                try:
+                    _, users, _ = msg.split(":", 2)
+                    target = users.strip()
+                except:
+                    pass
+
+            elif lower_msg.startswith("all"):
+                target = "all"
+
+            else:
+                try:
+                    target = msg.split(":", 1)[0].strip()
+                except:
+                    pass
+
+            if target:
+                send_typing_notification(client_socket, target)
+                time.sleep(0.3)
+        
+            
+
 
         try:
             final_message = format_and_encrypt_message(msg,key)
