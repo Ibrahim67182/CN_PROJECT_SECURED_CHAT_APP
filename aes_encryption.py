@@ -1,12 +1,14 @@
 import os 
 from dotenv import load_dotenv
 
+# AES-128 Implementation (manual, simplified, no external modules)
 
-# aes algorithm implementation for encryption 
 
-# AES S-box for forward substitution  (defined in AES specs document)  
+
+
+# AES S-box defined in AES specs document 
 SBOX = [
-    
+    # 0     1    2    3    4    5    6    7    8    9    A    B    C    D    E    F
     0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
     0xCA, 0x82, 0xC9, 0x7D, 0xFA, 0x59, 0x47, 0xF0, 0xAD, 0xD4, 0xA2, 0xAF, 0x9C, 0xA4, 0x72, 0xC0,
     0xB7, 0xFD, 0x93, 0x26, 0x36, 0x3F, 0xF7, 0xCC, 0x34, 0xA5, 0xE5, 0xF1, 0x71, 0xD8, 0x31, 0x15,
@@ -25,135 +27,83 @@ SBOX = [
     0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16,
 ]
 
-
-
-# Inverse S-box for decrypting the message
-
-INVERSE_SBOX = [0] * 256
+# Inverse S-box for decryption
+INV_SBOX = [0] * 256
 for i in range(256):
-    val = SBOX[i]
-    INVERSE_SBOX[val] = i
+    INV_SBOX[SBOX[i]] = i
 
-
-   # Basic XOR block function
-
+# Basic XOR block function
 def xor_bytes(a, b):
-   
-    result = []
-   
-    for i in range(len(a)):
-        result.append(a[i] ^ b[i])
-   
-    return result
+    return [x ^ y for x, y in zip(a, b)]
 
-
-# Sub Bytes step
-
+# SubBytes step
 def sub_bytes(state):
+    return [SBOX[b] for b in state]
 
-    result = []
+# Inverse SubBytes
+def inv_sub_bytes(state):
+    return [INV_SBOX[b] for b in state]
 
-    for byte in state:
-        result.append(SBOX[byte])
-
-    return result
-
-
-# Inverse the Sub- bytes
-def inverse_sub_bytes(state):
-    result = []
-    
-    for byte in state:
-    
-        result.append(INVERSE_SBOX[byte])
-    
-    return result
-
-
-
-# Simple key expansion  of 16-bit
-
+# Simple key expansion (just repeating the key for demo purposes)
 def key_expansion(key):
     return key * (16 // len(key))
 
 
-# generate key by loading  it from .env folder used shared key for both encryption and decryption
 def generate_key():
    
    load_dotenv()
    aes_key = os.getenv("AES_KEY")
-   
    return aes_key
 
-     
-# Encryption messages function to encrypt the messages  using a shared key 
-
-
-def aes_encryption(simple_text, key):
-   
-    state = []
-   
-    for char in simple_text.ljust(16):
-   
-        state.append(ord(char))
-
-   
-    key_bytes = []
-   
-    for char in key.ljust(16):
-   
-        key_bytes.append(ord(char))
-
-   
-    final_key = key_expansion(key_bytes)
-   
-    state = xor_bytes(state, final_key)
+    
+# Encryption function
+def aes_encrypt_block(plaintext, key):
+    state = [ord(c) for c in plaintext.ljust(16)]
+    expanded_key = key_expansion([ord(k) for k in key.ljust(16)])
+    state = xor_bytes(state, expanded_key)
     state = sub_bytes(state)
-    state = xor_bytes(state, final_key)
+    state = xor_bytes(state, expanded_key)
+    return ''.join(f'{b:02x}' for b in state)
 
-   
-    hexadecimal_result = ''
-   
-    for byte in state:
-   
-        hexadecimal_result += f'{byte:02x}'
-   
-    return hexadecimal_result
+# Decryption function
+def aes_decrypt_block(cipher_hex, key):
+    cipher_bytes = [int(cipher_hex[i:i+2], 16) for i in range(0, len(cipher_hex), 2)]
+    expanded_key = key_expansion([ord(k) for k in key.ljust(16)])
+    state = xor_bytes(cipher_bytes, expanded_key)
+    state = inv_sub_bytes(state)
+    state = xor_bytes(state, expanded_key)
+    return ''.join(chr(b) for b in state).strip()
 
 
 
+# Pad message to be a multiple of 16 bytes
+def pad_message(msg):
+    pad_len = 16 - (len(msg) % 16)
+    return msg + chr(pad_len) * pad_len
 
-# Decryption messages function to decrypt the messages using shared key 
-def aes_decryption(encypted_text, key):
-   
-    encrypted_bytes = []
-   
-    for i in range(0, len(encypted_text), 2):
-   
-        encrypted_bytes.append(int(encypted_text[i:i+2], 16))
+# Unpad the decrypted message
+def unpad_message(msg):
+    pad_len = ord(msg[-1])
+    if pad_len < 1 or pad_len > 16:
+        return msg  # fail-safe
+    return msg[:-pad_len]
 
-   
-    key_bytes = []
-   
-    for char in key.ljust(16):
-   
-        key_bytes.append(ord(char))
+# Encrypt a long message using AES block-by-block
+def aes_encrypt_message(plaintext, key):
+    key_bytes = key.ljust(16)[:16]
+    padded_text = pad_message(plaintext)
+    blocks = [padded_text[i:i+16] for i in range(0, len(padded_text), 16)]
+    encrypted_blocks = [aes_encrypt_block(block, key_bytes) for block in blocks]
+    return ''.join(encrypted_blocks)
 
-   
-    final_key = key_expansion(key_bytes)
-   
-    state = xor_bytes(encrypted_bytes, final_key)
-    state = inverse_sub_bytes(state)
-    state = xor_bytes(state, final_key)
+# Decrypt a long AES-encrypted message (hex input)
+def aes_decrypt_message(ciphertext_hex, key):
+    key_bytes = key.ljust(16)[:16]
+    blocks = [ciphertext_hex[i:i+32] for i in range(0, len(ciphertext_hex), 32)]
+    decrypted_blocks = [aes_decrypt_block(block, key_bytes) for block in blocks]
+    decrypted_text = ''.join(decrypted_blocks)
+    return unpad_message(decrypted_text)
 
-   
-    decrypted_result = ''
-   
-    for byte in state:
-   
-        decrypted_result += chr(byte)
-   
-    return decrypted_result.strip()
 
 
 
