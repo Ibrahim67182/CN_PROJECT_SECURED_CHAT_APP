@@ -5,7 +5,7 @@ import time
 
 
 # module used from our local files for encryption using aes methods 
-from aes_encryption import aes_encrypt_block, aes_decrypt_block, generate_key
+from aes_encryption import aes_encryption, aes_decryption, generate_key
 
 # instruction prompt display at top for guide to use app 
 

@@ -89,7 +89,7 @@ def generate_key():
 # Encryption messages function to encrypt the messages  using a shared key 
 
 
-def aes_encrypt_block(simple_text, key):
+def aes_encryption(simple_text, key):
    
     state = []
    
@@ -124,7 +124,7 @@ def aes_encrypt_block(simple_text, key):
 
 
 # Decryption messages function to decrypt the messages using shared key 
-def aes_decrypt_block(encypted_text, key):
+def aes_decryption(encypted_text, key):
    
     encrypted_bytes = []
    
