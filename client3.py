@@ -61,7 +61,7 @@ def receive_messages(client_socket , key):
                   
                     if all(c in '0123456789abcdefABCDEF' for c in encrypted_text.replace(" ", "")):
                   
-                        decrypted_text = aes_decrypt_block(encrypted_text, key)
+                        decrypted_text = aes_decryption(encrypted_text, key)
                   
                         print(f"\n[Group:{group_name}] {sender}: {decrypted_text}")
                         continue
@@ -86,7 +86,7 @@ def receive_messages(client_socket , key):
                    
                     if all(c in '0123456789abcdefABCDEF' for c in encrypted_text.replace(" ", "")):
                    
-                        decrypted_text = aes_decrypt_block(encrypted_text, key)
+                        decrypted_text = aes_decryption(encrypted_text, key)
                    
                         print(f"\n{sender} : {decrypted_text}")
                    
@@ -150,7 +150,7 @@ def format_and_encrypt_message(msg , key):
         if len(parts) == 3:
         
             command, users, content = parts
-            encrypted = aes_encrypt_block(content.strip(), key)
+            encrypted = aes_encryption(content.strip(), key)
         
             return f"{command.strip()}: {users.strip()} : {encrypted}"
 
@@ -162,7 +162,7 @@ def format_and_encrypt_message(msg , key):
         if len(parts) == 3:
        
             command, group, content = parts
-            encrypted = aes_encrypt_block(content.strip(), key)
+            encrypted = aes_encryption(content.strip(), key)
        
             return f"sendgroup:{group.strip()}:{encrypted}"
 
@@ -175,7 +175,7 @@ def format_and_encrypt_message(msg , key):
        
             command, content = parts
        
-            encrypted = aes_encrypt_block(content.strip(), key)
+            encrypted = aes_encryption(content.strip(), key)
             return f"{command.strip()} : {encrypted}"
 
     
@@ -186,7 +186,7 @@ def format_and_encrypt_message(msg , key):
         if len(parts) == 2:
     
             username, content = parts
-            encrypted = aes_encrypt_block(content.strip(), key)
+            encrypted = aes_encryption(content.strip(), key)
     
             return f"{username.strip()} : {encrypted}"
 
@@ -206,7 +206,7 @@ def main():
    
     server_ip = input("\nEnter server IP (default 127.0.0.1): ") or "127.0.0.1"
    
-    server_port = 3009
+    server_port =  3009  # allocate proper server port 
 
     
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
