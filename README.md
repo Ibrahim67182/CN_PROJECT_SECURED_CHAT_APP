@@ -82,7 +82,7 @@ cd secure-chat-app
 ### 2. Run the Server
 Update HOST in server.py to your local IP address (e.g., 192.168.x.x) and start the server:
 
-# #python server.py
+## python server.py
 
 ### 3. Run the Client(s)
 On the same or different devices (connected to same network):  (for different devices use cnetral server ip of one of device and make sure each device is connected to same wifi)
@@ -136,6 +136,8 @@ This project is for academic and educational purposes.
 
 ## 🔗 Connect
 ✉️ Ibrahim Junaid -  https://github.com/Ibrahim67182
+
+
 ✉️ Anas Ahmed -      https://github.com/anasahmed81103
 
 
